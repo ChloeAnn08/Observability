@@ -4,7 +4,10 @@ const { ATTR_SERVICE_NAME } = require('@opentelemetry/semantic-conventions');
 const { NodeSDK } = require('@opentelemetry/sdk-node');
 
 const { getNodeAutoInstrumentations, } = require('@opentelemetry/auto-instrumentations-node');
-const { ConsoleSpanExporter } = require('@opentelemetry/sdk-trace-node');
+const {
+    OTLPTraceExporter,
+} = require('@opentelemetry/exporter-trace-otlp-http');
+
 const {
     ConsoleMetricExporter,
     PeriodicExportingMetricReader,
@@ -18,13 +21,21 @@ const { MongoDBInstrumentation } =
 const { HttpInstrumentation } = require("@opentelemetry/instrumentation-http");
 
 const sdk = new NodeSDK({
+    traceExporter: new OTLPTraceExporter({
+        // optional - default url is http://localhost:4318/v1/traces
+        url: 'http://localhost:4318/v1/traces',
+        // optional - collection of custom headers to be sent with each request, empty by default
+        headers: {},
+    }),
+
     resource: resourceFromAttributes({
         [ATTR_SERVICE_NAME]: "todo-service"
     }),
-    traceExporter: new ConsoleSpanExporter(),
+
     metricReader: new PeriodicExportingMetricReader({
         exporter: new ConsoleMetricExporter(),
     }),
+
     instrumentations: [
         getNodeAutoInstrumentations(),
         new ExpressInstrumentation(),
